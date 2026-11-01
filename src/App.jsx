@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Play, RotateCcw, ShieldCheck, Flame, Info, Zap, 
   Search, Filter, ShieldAlert, Sparkles, X, Thermometer, Droplets, Gauge, 
-  FlaskConical, AlertOctagon, HelpCircle, Plus, Minus, Beaker, Layers, Atom
+  FlaskConical, AlertOctagon, HelpCircle, Plus, Minus, Beaker, Layers, Atom, Download
 } from 'lucide-react';
 
 const ELEMENTS_DATA = [
@@ -333,47 +333,45 @@ function evaluateReaction(selectedItems) {
     }
 
     // -------------------------------------------------------------
-    // PARCHE 2: CERÁMICAS DE RED COVALENTE RETICULAR (Metaloides + Carbono)
+    // CERÁMICAS DE RED COVALENTE / CARBUROS REFRACTARIOS (B, Si + C)
     // -------------------------------------------------------------
     const hasCarbon = symbols.includes('C');
     const hasMetalloid = elements.some(e => e.category === 'metalloid');
     if (hasCarbon && hasMetalloid && selectedItems.length === 2) {
       const metalloidItem = selectedItems.find(i => i.element.category === 'metalloid');
-      const carbonItem = selectedItems.find(i => i.element.symbol === 'C');
       const mSym = metalloidItem.element.symbol;
-      const mCount = metalloidItem.count;
-      const cCount = carbonItem.count;
+      
+      let formulaCeramic = 'B₄C';
+      let ceramicName = 'Carburo de Boro';
+      let exactMass = '55.25'; // 4*10.81 + 12.011
+      let eqString = `4 ${mSym} + 1 C → B₄C`;
 
-      let formulaCeramic = `${mSym}${mCount > 1 ? toSubscript(mCount) : ''}C${cCount > 1 ? toSubscript(cCount) : ''}`;
-      let ceramicName = `Carburo de ${metalloidItem.element.name}`;
-      if (mSym === 'B') {
-        formulaCeramic = 'B₄C';
-        ceramicName = 'Carburo de Boro';
-      } else if (mSym === 'Si') {
+      if (mSym === 'Si') {
         formulaCeramic = 'SiC';
         ceramicName = 'Carburo de Silicio (Carborundo)';
+        exactMass = '40.10'; // 28.085 + 12.011
+        eqString = `1 ${mSym} + 1 C → SiC`;
       }
 
-      const totalMassCeramic = ((metalloidItem.element.mass * mCount) + (12.011 * cCount)).toFixed(2);
       const reactList = selectedItems.map(item => `${item.count} ${item.element.symbol}`).join(' + ');
 
       return {
         success: true,
         title: `Síntesis de Cerámica Ultra-dura: Formación de ${ceramicName}`,
-        equation: `${reactList} → ${formulaCeramic} (Red Covalente Reticular)`,
+        equation: `${reactList} → ${formulaCeramic} (Red Covalente Reticular Fija)`,
         finalProduct: {
           name: ceramicName,
           formula: formulaCeramic,
-          molarMass: `${totalMassCeramic} g/mol`,
-          type: 'Sólido de Red Covalente Reticular / Cerámica Ultra-dura'
+          molarMass: `${exactMass} g/mol`,
+          type: 'Sólido de Red Covalente Reticular / Cerámica Avanzada'
         },
-        thermodynamics: 'Enlace covalente reticular tridimensional de alta energía de disociación y dureza excepcional (Mohs > 9).',
-        kinetics: 'Reacción en estado sólido a temperaturas extremas asistida por difusión atómica por vacantes.',
+        thermodynamics: 'Enlace covalente tridimensional de alta energía de disociación y dureza excepcional (Mohs > 9).',
+        kinetics: 'Reacción en estado sólido a temperaturas extremas asistida por difusión atómica.',
         conditions: { temp: '1900°C - 2400°C', pressure: '30 MPa - 50 MPa', humidity: '0%' },
         procedure: [
-          'Mezclado y molienda de alta energía de los polvos precursores en molino de bolas.',
+          'Mezclado estequiométrico riguroso de los polvos precursores en proporción de red cristalina.',
           'Carga de la mezcla en matriz de grafito de alta densidad.',
-          'Sinterización por plasma (SPS) o prensado en caliente a temperaturas superiores a 1900°C.'
+          'Sinterización por plasma (SPS) o prensado en caliente a alta temperatura.'
         ],
         whatCouldGoWrong: 'Oxidación prematura a dióxidos si hay trazas de oxígeno ambiental a alta temperatura.',
         prohibitionNotice: null,
@@ -382,7 +380,6 @@ function evaluateReaction(selectedItems) {
         crucibles: 'Matriz de grafito de alta densidad y prensa de inducción por plasma.'
       };
     }
-
     // -------------------------------------------------------------
     // ALEACIONES METÁLICAS
     // -------------------------------------------------------------
@@ -452,6 +449,168 @@ function evaluateReaction(selectedItems) {
     }
 
     // -------------------------------------------------------------
+    // PARCHE ESPECIAL: OXÁCIDOS (Ácidos Ternarios: H + No Metal + O)
+    // -------------------------------------------------------------
+    if (selectedItems.length === 3) {
+      const symbolsSet = new Set(symbols);
+      const hasO = symbolsSet.has('O');
+      const hasH = symbolsSet.has('H');
+      const nonMetalItem = selectedItems.find(i => ['nonmetal', 'halogen', 'metalloid'].includes(i.element.category) && !['H', 'O'].includes(i.element.symbol));
+
+      if (hasH && hasO && nonMetalItem) {
+        const nm = nonMetalItem.element;
+        let oxacidName = `Ácido Oxácido de ${nm.name}`;
+        let oxacidFormula = `HXO₃`;
+        let hSub = 1, oSub = 3;
+
+        if (nm.symbol === 'S') {
+          oxacidName = 'Ácido Sulfúrico';
+          oxacidFormula = 'H₂SO₄';
+          hSub = 2; oSub = 4;
+        } else if (nm.symbol === 'N') {
+          oxacidName = 'Ácido Nítrico';
+          oxacidFormula = 'HNO₃';
+          hSub = 1; oSub = 3;
+        } else if (nm.symbol === 'C') {
+          oxacidName = 'Ácido Carbónico';
+          oxacidFormula = 'H₂CO₃';
+          hSub = 2; oSub = 3;
+        } else if (nm.symbol === 'Cl') {
+          oxacidName = 'Ácido Clórico';
+          oxacidFormula = 'HClO₃';
+          hSub = 1; oSub = 3;
+        }
+
+        const exactMass = ((1.008 * hSub) + nm.mass + (15.999 * oSub)).toFixed(2);
+
+        return {
+          success: true,
+          title: `Síntesis de Oxácido: Formación de ${oxacidName}`,
+          equation: `H₂O + ${nm.symbol}O${oSub - 1} → ${oxacidFormula}`,
+          finalProduct: {
+            name: oxacidName,
+            formula: oxacidFormula,
+            molarMass: `${exactMass} g/mol`,
+            type: 'Compuesto Ternario Covalente Polar (Oxácido Fuerte)'
+          },
+          thermodynamics: 'Hidratación del anhídrido ácido correspondiente. Reacción altamente exotérmica por energía de solvatación del protón H⁺.',
+          kinetics: 'Formación cinéticamente rápida en fase acuosa.',
+          conditions: { temp: '20°C - 80°C', pressure: '1.0 atm', humidity: 'Ambiente acuoso' },
+          procedure: [
+            'Absorción del óxido no metálico (anhídrido) sobre película de agua desionizada.',
+            'Disipación continua de calor por serpentín de enfriamiento.',
+            'Concentración por destilación a baja presión si se requiere grado reactivo.'
+          ],
+          whatCouldGoWrong: 'Proyección violenta de líquido ácido por adición incorrecta de agua sobre el concentrado.',
+          prohibitionNotice: 'NUNCA ADICIONAR AGUA AL ÁCIDO CONCENTRADO (Riesgo de ebullición explosiva puntual).',
+          risks: 'Corrosión cutánea inmediata y deshidratación de tejidos orgánicos.',
+          safetyEquipment: ['Pantalla facial completa', 'Guantes de nitrilo pesado de manga larga', 'Bata ignífuga / Delantal de PVC'],
+          crucibles: 'Vidrio borosilicato 3.3 o Reactores revestidos de PTFE.'
+        };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PARCHE 5: COMPUESTOS TERNARIOS (Hidróxidos y Oxisales)
+    // -------------------------------------------------------------
+    if (selectedItems.length === 3) {
+      const symbolsSet = new Set(symbols);
+      
+      // 1. HIDRÓXIDOS: Metal + Oxígeno + Hidrógeno
+      const hasO = symbolsSet.has('O');
+      const hasH = symbolsSet.has('H');
+      const metalItem = selectedItems.find(i => ['alkali', 'alkaline', 'transition', 'post-transition', 'lanthanide', 'actinide'].includes(i.element.category));
+
+      if (hasO && hasH && metalItem && symbols.length === 3) {
+        const metal = metalItem.element;
+        const oxValence = Math.abs(metal.oxStates?.[0] || 1);
+        const formula = `${metal.symbol}(OH)${oxValence > 1 ? toSubscript(oxValence) : ''}`;
+        const name = `Hidróxido de ${metal.name}`;
+        const molarMass = (metal.mass + oxValence * (15.999 + 1.008)).toFixed(2);
+
+        return {
+          success: true,
+          title: `Síntesis de Compuesto Ternario: Formación de ${name}`,
+          equation: `${metal.symbol} + ${oxValence} H₂O → ${formula} + ½ H₂`,
+          finalProduct: {
+            name: name,
+            formula: formula,
+            molarMass: `${molarMass} g/mol`,
+            type: 'Compuesto Ternario Iónico (Hidróxido / Base)'
+          },
+          thermodynamics: 'Disociación iónica en medio acuoso con liberación de aniones hidróxido (OH⁻). Enlace iónico fuerte entre el catión metálico y el grupo hidróxido.',
+          kinetics: 'Reacción controlada de hidratación y precipitación básica.',
+          conditions: { temp: '25°C - 100°C', pressure: '1.0 atm', humidity: 'Ambiente controlado' },
+          procedure: [
+            'Adición lenta del metal o su óxido en agua desionizada con agitación constante.',
+            'Control exotérmico de la temperatura de hidratación.',
+            'Cristalización y filtración del hidróxido metálico precipitado.'
+          ],
+          whatCouldGoWrong: 'Reacción violentamente exotérmica si se emplea metal alcalino puro directamente con agua.',
+          prohibitionNotice: metal.category === 'alkali' ? 'PRECAUCIÓN: Reacción altamente exotérmica y peligrosa con agua libre.' : null,
+          risks: 'Corrosividad severa cutánea y ocular por basicidad fuerte.',
+          safetyEquipment: ['Gafas de seguridad estancas', 'Guantes de neopreno', 'Bata de laboratorio de algodón'],
+          crucibles: 'Matriz de teflón (PTFE) o vidrio borosilicato.'
+        };
+      }
+
+      // 2. OXISALES: Metal + No Metal + Oxígeno
+      const nonMetalItem = selectedItems.find(i => ['nonmetal', 'halogen', 'metalloid'].includes(i.element.category) && i.element.symbol !== 'O');
+      if (hasO && metalItem && nonMetalItem && symbols.length === 3) {
+        const metal = metalItem.element;
+        const nonMetal = nonMetalItem.element;
+        
+        let saltName = `Oxisal de ${metal.name} y ${nonMetal.name}`;
+        let saltFormula = `${metal.symbol}XO₄`;
+        let exactSaltMass = 0;
+        
+        if (nonMetal.symbol === 'S') {
+          saltName = `Sulfato de ${metal.name}`;
+          const metalVal = Math.abs(metal.oxStates?.[0] || 2);
+          const mSub = metalVal === 1 ? 2 : 1;
+          saltFormula = `${metal.symbol}${mSub > 1 ? toSubscript(mSub) : ''}SO₄`;
+          exactSaltMass = (metal.mass * mSub) + 32.06 + (4 * 15.999);
+        } else if (nonMetal.symbol === 'N') {
+          saltName = `Nitrato de ${metal.name}`;
+          const metalVal = Math.abs(metal.oxStates?.[0] || 1);
+          saltFormula = `${metal.symbol}${metalVal > 1 ? toSubscript(metalVal) : ''}(NO₃)${metalVal > 1 ? toSubscript(metalVal) : ''}`;
+          exactSaltMass = (metal.mass * metalVal) + metalVal * (14.007 + (3 * 15.999));
+        } else if (nonMetal.symbol === 'C') {
+          saltName = `Carbonato de ${metal.name}`;
+          const metalVal = Math.abs(metal.oxStates?.[0] || 2);
+          const mSub = metalVal === 1 ? 2 : 1;
+          saltFormula = `${metal.symbol}${mSub > 1 ? toSubscript(mSub) : ''}CO₃`;
+          exactSaltMass = (metal.mass * mSub) + 12.011 + (3 * 15.999);
+        }
+
+        return {
+          success: true,
+          title: `Síntesis de Oxisal Ternaria: Formación de ${saltName}`,
+          equation: `${metal.symbol} + ${nonMetal.symbol} + O₂ → ${saltFormula}`,
+          finalProduct: {
+            name: saltName,
+            formula: saltFormula,
+            molarMass: exactSaltMass > 0 ? `${exactSaltMass.toFixed(2)} g/mol` : 'Variable',
+            type: 'Compuesto Ternario Iónico (Oxisal)'
+          },
+          thermodynamics: 'Formación de red cristalina iónica tridimensional entre el catión metálico y el oxianión poliatómico con alta energía reticular.',
+          kinetics: 'Reacción en estado sólido a temperatura elevada o precipitación por neutralización.',
+          conditions: { temp: '400°C - 800°C (Sinterización)', pressure: '1.0 atm', humidity: '< 30%' },
+          procedure: [
+            'Mezclado íntimo de precursores metálicos, no metálicos y fuente de oxígeno.',
+            'Calentamiento en horno mufla para consolidación de la red cristalina de la oxisal.',
+            'Molienda final y tamizado del producto cristalino obtenido.'
+          ],
+          whatCouldGoWrong: 'Descomposición térmica parcial de la oxisal si se excede la temperatura de calcinación.',
+          prohibitionNotice: null,
+          risks: 'Irritación por inhalación de polvos finos salinos.',
+          safetyEquipment: ['Mascarilla antipolvo P100', 'Guantes de nitrilo', 'Gafas de seguridad'],
+          crucibles: 'Crisol de Alúmina (Al₂O₃) o Porcelana de alta pureza.'
+        };
+      }
+    }
+
+    // -------------------------------------------------------------
     // COMPUESTOS ESTEQUIOMÉTRICOS & ENLACES ESPECÍFICOS
     // -------------------------------------------------------------
     const sorted = [...selectedItems].sort((a, b) => (a.element.en || 0) - (b.element.en || 0));
@@ -486,11 +645,78 @@ function evaluateReaction(selectedItems) {
     const exactMolarMass = ((cation.mass * subCation) + (anion.mass * subAnion)).toFixed(2);
 
     // -------------------------------------------------------------
-    // PARCHE 1: COVALENCIA MOLECULAR EN GASES LIGEROS (N + H, C + H, O + H, etc.)
+    // PARCHE DE HIDRÁCIDOS (Hidrógeno + Halógeno / Azufre - 2 elementos)
     // -------------------------------------------------------------
-    const isLightGases = selectedItems.every(i => ['H', 'N', 'O', 'C', 'F'].includes(i.element.symbol));
+    if (selectedItems.length === 2) {
+      const hasH = symbols.includes('H');
+      const hasO = symbols.includes('O');
+      const nonMetalItem = selectedItems.find(i => ['halogen', 'nonmetal', 'metalloid'].includes(i.element.category) && i.element.symbol !== 'H');
+
+      if (hasH && !hasO && nonMetalItem) {
+        const nm = nonMetalItem.element;
+        const oxVal = Math.abs(nm.oxStates?.[0] || 1);
+        const formula = `H${oxVal > 1 ? toSubscript(oxVal) : ''}${nm.symbol}`;
+        const acidName = `Ácido ${nm.name.replace(/o$|e$/, '')}hídrico (Gas ${nm.name}uro de Hidrógeno)`;
+        const mass = (1.008 * oxVal + nm.mass).toFixed(2);
+
+        return {
+          success: true,
+          title: `Síntesis de Hidrácido: Formación de ${acidName}`,
+          equation: `${oxVal} H + ${nm.symbol} → ${formula} (g)`,
+          finalProduct: {
+            name: acidName,
+            formula: formula,
+            molarMass: `${mass} g/mol`,
+            type: 'Compuesto Covalente Polar (Hidrácido en Fase Gaseosa/Acuosa)'
+          },
+          thermodynamics: 'Enlace covalente fuertemente polar por gran diferencia de electronegatividad. Disociación ácida completa en medio acuoso.',
+          kinetics: 'Reacción en fase gaseosa fuertemente exotérmica con cinética rápida de adición.',
+          conditions: { temp: '25°C - 300°C', pressure: '1.0 atm', humidity: '< 5% (Gas Anhidro)' },
+          procedure: [
+            'Inyección de reactivos gaseosos anhidros en reactor hermético de cuarzo.',
+            'Síntesis por ignición o mezcla asistida por luz UV/térmica.',
+            'Absorción del gas resultante en agua desionizada si se requiere solución acuosa.'
+          ],
+          whatCouldGoWrong: 'Fuga de gas altamente corrosivo, peligro de irritación pulmonar severa y ataque ácido instantáneo al equipo.',
+          prohibitionNotice: 'ALERTA DE SEGURIDAD: Gas fuertemente irritante y corrosivo. Prohibido abrir la línea sin extractor de lavado (Scrubber).',
+          risks: 'Quemaduras químicas graves e inhalación tóxica.',
+          safetyEquipment: ['Campana de extracción de alta velocidad', 'Mascarilla panorámica con cartucho para gases ácidos', 'Guantes de neopreno'],
+          crucibles: 'Reactor de cuarzo o celda de teflón (PTFE).'
+        };
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PARCHE 1: GASES DIATÓMICOS PUROS O COEXISTENCIA DE GASES LIGEROS
+    // -------------------------------------------------------------
+    const isLightGases = selectedItems.every(i => ['H', 'N', 'O', 'C', 'F', 'Cl'].includes(i.element.symbol));
     if (isLightGases) {
       const reactList = selectedItems.map(item => `${item.count} ${item.element.symbol}`).join(' + ');
+
+      // Sub-caso: Si mezclan Oxígeno y Nitrógeno como elementos puros sin un catalizador de combustión forzada
+      if (symbols.includes('O') && symbols.includes('N') && symbols.length === 2) {
+        return {
+          success: false,
+          title: 'Coexistencia de Gases Atmosféricos (Sin Reacción Espontánea)',
+          equation: `${reactList} → Mezcla Física Homogénea (Aire Sintético)`,
+          finalProduct: {
+            name: 'Mezcla Gaseosa Inerte / Atmosférica',
+            formula: symbols.map((s, i) => `${s}${selectedItems[i].count > 1 ? toSubscript(selectedItems[i].count) : ''}`).join(' · '),
+            molarMass: selectedItems.reduce((sum, item) => sum + (item.element.mass * item.count), 2).toFixed(2) + ' g/mol',
+            type: 'Mezcla Gaseosa Física'
+          },
+          thermodynamics: 'Los gases diatómicos estables ($O_2$ y $N_2$) no reaccionan a condiciones estándar debido a la elevada energía de disociación del enlace triple del nitrógeno ($\Delta G > 0$).',
+          kinetics: 'Inercia química a temperatura ambiente.',
+          conditions: { temp: '25°C', pressure: '1.0 atm', humidity: '0%' },
+          procedure: ['Mezclado físico de gases permanentes en cámara estanca.'],
+          whatCouldGoWrong: 'Ninguno bajo condiciones controladas.',
+          prohibitionNotice: null,
+          risks: 'Ninguno.',
+          safetyEquipment: ['Válvulas de presión estándar'],
+          crucibles: 'Cilindro de gas de acero al carbono.'
+        };
+      }
+
       let molName = 'Compuesto Covalente Molecular Discreto';
       let molFormula = formulaStr;
       let procSteps = [
@@ -799,6 +1025,58 @@ export default function App() {
     setActiveTab('chamber');
   };
 
+  const exportLabReport = () => {
+    if (!reactionResult) return;
+
+    const reportContent = `
+===================================================================
+                SYNTHETICA LAB - INFORME TÉCNICO DE REACCIÓN
+===================================================================
+Fecha/Hora: ${new Date().toLocaleString()}
+
+1. INFORMACIÓN DEL SISTEMA Y PRODUCTO
+-------------------------------------------------------------------
+Título: ${reactionResult.title}
+Ecuación Química: ${reactionResult.equation}
+Producto Obtenido: ${reactionResult.finalProduct?.name || 'N/A'}
+Fórmula Estequiométrica: ${reactionResult.finalProduct?.formula || 'N/A'}
+Masa Molar: ${reactionResult.finalProduct?.molarMass || 'N/A'}
+Tipo de Enlace / Fase: ${reactionResult.finalProduct?.type || 'N/A'}
+
+2. CONDICIONES OPERATIVAS Y TERMODINÁMICA
+-------------------------------------------------------------------
+Rango Térmico: ${reactionResult.conditions?.temp}
+Presión Requerida: ${reactionResult.conditions?.pressure}
+Humedad Relativa: ${reactionResult.conditions?.humidity}
+Compatibilidad del Crisol: ${reactionResult.crucibles}
+
+Análisis Termodinámico: ${reactionResult.thermodynamics}
+Cinética y Difusión: ${reactionResult.kinetics}
+
+3. PROTOCOLO EXPERIMENTAL PASO A PASO
+-------------------------------------------------------------------
+${reactionResult.procedure?.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+
+4. SEGURIDAD, RIESGOS Y EPP
+-------------------------------------------------------------------
+Análisis de Fallos: ${reactionResult.whatCouldGoWrong}
+${reactionResult.prohibitionNotice ? `¡AVISO CRÍTICO!: ${reactionResult.prohibitionNotice}\n` : ''}
+Equipamiento de Protección: ${reactionResult.safetyEquipment?.join(', ')}
+
+===================================================================
+                  FIN DEL REPORTE EXPERIMENTAL
+===================================================================
+`;
+
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SyntheticaLab_Reporte_${reactionResult.finalProduct?.formula || 'Simulacion'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleRunSimulation = () => {
     if (selectedItems.length === 0) return;
     setIsProcessing(true);
@@ -1036,10 +1314,19 @@ export default function App() {
 
             {reactionResult && (
               <div className="bg-slate-900/60 border border-cyan-500/30 rounded-2xl p-6 backdrop-blur-xl space-y-6 shadow-2xl">
-                <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                  <Layers className="w-6 h-6 text-cyan-400 shrink-0" />
-                  <h3 className="font-bold text-base md:text-lg text-slate-100">{reactionResult.title}</h3>
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <Layers className="w-6 h-6 text-cyan-400 shrink-0" />
+                    <h3 className="font-bold text-base md:text-lg text-slate-100">{reactionResult.title}</h3>
+                  </div>
+                  <button
+                    onClick={exportLabReport}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 flex items-center gap-2 cursor-pointer transition-all shadow-lg"
+                  >
+                    <Download className="w-4 h-4" /> Exportar Informe de Laboratorio (.txt)
+                  </button>
                 </div>
+                
 
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center font-mono text-cyan-300 text-sm md:text-base tracking-wide shadow-inner">
                   {reactionResult.equation}
